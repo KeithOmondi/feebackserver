@@ -40,26 +40,27 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
 
 
 // =============================
-// LOGIN WITH PJ NUMBER
+// LOGIN WITH PJ NUMBER (ONLY)
 // =============================
 export const loginUser = asyncHandler(async (req: Request, res: Response) => {
-  const { pj, password } = req.body;
+  const { pj } = req.body;
 
-  if (!pj || !password) {
-    throw new ApiError(400, "PJ number and password are required");
+  // 1. Remove "password" from this check
+  if (!pj) {
+    throw new ApiError(400, "PJ number is required");
   }
 
   const user = await User.findOne({ pj });
 
   if (!user) {
-    throw new ApiError(401, "Invalid PJ number or password");
+    throw new ApiError(401, "Invalid PJ number");
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
-
-  if (!isMatch) {
-    throw new ApiError(401, "Invalid PJ number or password");
-  }
+  // 2. DELETE OR COMMENT OUT THESE LINES:
+  // const isMatch = await bcrypt.compare(password, user.password);
+  // if (!isMatch) {
+  //   throw new ApiError(401, "Invalid password");
+  // }
 
   const token = generateToken(user._id.toString());
 
@@ -73,6 +74,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      role: user.role, // Ensure role is sent to frontend
     },
   });
 });

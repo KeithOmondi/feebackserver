@@ -11,7 +11,8 @@ export interface IUser extends Document {
   idNo?: string;
   station: string;
   img?: string;
-  password: string;
+  password?: string; // Made optional for PJ-only login
+  role: "admin" | "user"; // Added role to TypeScript
 }
 
 const userSchema = new Schema<IUser>(
@@ -26,7 +27,12 @@ const userSchema = new Schema<IUser>(
     idNo: { type: String },
     station: { type: String },
     img: { type: String },
-    password: { type: String, required: true },
+    password: { type: String }, // Removed required: true if not using passwords
+    role: { 
+      type: String, 
+      enum: ["admin", "user"], 
+      default: "user" 
+    }, // Added role to Mongoose with a default
   },
   { timestamps: true }
 );

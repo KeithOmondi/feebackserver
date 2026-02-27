@@ -11,36 +11,35 @@ export const getManualSections = asyncHandler(async (_req: Request, res: Respons
 
 /**
  * Generic helper to add entries to ManualSection arrays
- * Handles: comments, amendments, justifications
+ * Handles: comments, amendments, justifications, and references
  */
 export const addSectionEntry = asyncHandler(async (req: Request, res: Response) => {
   const { sectionId, userId, content, type } = req.body;
 
-  // 1. Validate 'type' maps to a valid schema array
-  const validTypes: Record<string, string> = {
-    comment: "comments",
-    amendment: "amendments",
-    justification: "justifications",
+  // 1. Validate 'type' and map to the correct Schema array AND field name
+  const typeMap: Record<string, { arrayKey: string; fieldName: string }> = {
+    comment: { arrayKey: "comments", fieldName: "comment" },
+    amendment: { arrayKey: "amendments", fieldName: "proposedChange" },
+    justification: { arrayKey: "justifications", fieldName: "justification" },
+    reference: { arrayKey: "references", fieldName: "reference" }, // Added Field 3 support
   };
 
-  const arrayKey = validTypes[type as keyof typeof validTypes];
-  if (!arrayKey) throw new ApiError(400, "Invalid entry type");
+  const config = typeMap[type as keyof typeof typeMap];
+  
+  if (!config) throw new ApiError(400, "Invalid entry type");
   if (!content) throw new ApiError(400, `${type} content cannot be empty`);
 
-  // 2. Build the update object dynamically
-  // We use [arrayKey] to target the specific array (e.g., 'comments')
+  // 2. Build the update object dynamically using the mapped fieldName
   const updatePayload = {
     userId,
     createdAt: new Date(),
-    ...(type === "comment" && { comment: content }),
-    ...(type === "amendment" && { proposedChange: content }),
-    ...(type === "justification" && { justification: content }),
+    [config.fieldName]: content, 
   };
 
-  // 3. Atomic update using $push (More efficient than find + save)
+  // 3. Atomic update using $push
   const section = await ManualSection.findByIdAndUpdate(
     sectionId,
-    { $push: { [arrayKey]: updatePayload } },
+    { $push: { [config.arrayKey]: updatePayload } },
     { new: true, runValidators: true }
   );
 
