@@ -32,7 +32,7 @@ const seedManualSections = async () => {
 };
 
 mongoose
-  .connect(process.env.MONGO_URI || "mongodb+srv://principalregistry_db_user:pr.@cluster0.85iismr.mongodb.net/?appName=Cluster0")
+  .connect(process.env.MONGO_URI || "")
   .then(() => {
     console.log("MongoDB connected...");
     seedManualSections();
