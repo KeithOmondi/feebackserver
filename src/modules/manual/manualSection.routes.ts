@@ -3,7 +3,8 @@ import {
   getManualSections,
   getAdminQuestionnaireView,
   downloadAdminReport,
-  addSectionEntry
+  addSectionEntry,
+  deleteSectionEntry
 } from "./manualSection.controller";
 import { authorize, protect } from "../../middlewares/authMiddleware";
 
@@ -68,6 +69,15 @@ router.get(
   protect,
   authorize("admin"),
   downloadAdminReport
+);
+
+
+// Example Route Registration
+router.delete(
+  "/section/:sectionId/:entryType/:entryId", 
+  protect, // Ensure only authorized users can delete
+  authorize("admin"),
+  deleteSectionEntry
 );
 
 
