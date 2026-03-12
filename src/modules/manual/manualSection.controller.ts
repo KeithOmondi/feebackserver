@@ -113,44 +113,59 @@ export const downloadAdminReport = asyncHandler(
     doc.pipe(res);
 
     const colors = {
-      primaryGreen: "#1a3a32",
-      accentGold: "#b48222",
-      textDark: "#25443c",
-      lightGray: "#666666",
-      borderGray: "#e0e0e0",
-      actionBlue: "#2b5a91" // Distinct color for actions
+      primaryGreen: "#1a3a32",  // Judicial Green
+      accentGold: "#b48222",    // Official Gold
+      textDark: "#222222",
+      lightGray: "#777777",
+      borderGray: "#d1d1d1",
+      actionBlue: "#1e40af",    // Professional Blue
+      bgSoft: "#f9f9f9"
     };
 
-    // Header logic...
-    doc.rect(0, 0, doc.page.width, 100).fill(colors.primaryGreen);
-    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(22).text("High Court of Kenya", 50, 35);
-    doc.fontSize(10).font("Helvetica").text("DISCIPLINARY PROCEDURES MANUAL | AUDIT REPORT", 50, 65);
-    doc.moveDown(4);
+    // --- Page Header ---
+    const drawHeader = () => {
+      doc.rect(0, 0, doc.page.width, 100).fill(colors.primaryGreen);
+      doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(20).text("THE JUDICIARY OF KENYA", 50, 30);
+      doc.fontSize(10).font("Helvetica").text("HIGH COURT DISCIPLINARY PROCEDURES MANUAL", 50, 55);
+      doc.fontSize(9).fillColor(colors.accentGold).text(`AUDIT REPORT GENERATED: ${new Date().toLocaleDateString('en-GB')}`, 50, 70);
+    };
+
+    drawHeader();
+    doc.moveDown(5);
 
     sections.forEach((section) => {
-      if (doc.y > 650) doc.addPage();
+      // Prevent orphaned section headers
+      if (doc.y > 600) {
+        doc.addPage();
+        drawHeader();
+        doc.moveDown(5);
+      }
 
-      // Section Code and Title
+      // --- Section Header Bar ---
       const sectionTop = doc.y;
-      doc.rect(50, sectionTop, 40, 20).fill(colors.accentGold);
-      doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(10).text(section.code, 55, sectionTop + 5, { width: 30, align: "center" });
-      doc.fillColor(colors.primaryGreen).fontSize(12).text(section.title.toUpperCase(), 100, sectionTop + 5);
+      doc.rect(50, sectionTop, 50, 22).fill(colors.primaryGreen);
+      doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(11).text(section.code, 50, sectionTop + 6, { width: 50, align: "center" });
+      
+      doc.fillColor(colors.primaryGreen).fontSize(13).text(section.title.toUpperCase(), 110, sectionTop + 5);
       doc.moveDown(1.5);
 
-      // Main Content
-      doc.font("Helvetica-Oblique").fontSize(11).fillColor(colors.textDark).text(section.content || "No content provided.", { align: "justify" });
-      doc.moveDown(1);
+      // --- Section Original Content ---
+      doc.font("Helvetica-Oblique").fontSize(10).fillColor(colors.textDark).text(section.content || "No clause content available.", { 
+        align: "justify",
+        lineGap: 2 
+      });
       
-      doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor(colors.borderGray).stroke();
+      doc.moveDown(1);
+      doc.strokeColor(colors.borderGray).lineWidth(0.5).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
       doc.moveDown(1);
 
-      // --- SUB-ENTRIES ---
+      // --- Audit Entries ---
       const entryTypes = [
         { key: "actions", label: "PROPOSED ACTION", field: "action", color: colors.actionBlue },
-        { key: "justifications", label: "JUSTIFICATIONS", field: "justification", color: colors.accentGold },
-        { key: "amendments", label: "PROPOSED WORDING", field: "proposedChange", color: colors.accentGold },
-        { key: "references", label: "REFERENCES", field: "reference", color: colors.accentGold },
-        { key: "comments", label: "GENERAL COMMENTS", field: "comment", color: colors.accentGold },
+        { key: "amendments", label: "PROPOSED WORDING / AMENDMENT", field: "proposedChange", color: colors.primaryGreen },
+        { key: "justifications", label: "JUSTIFICATION", field: "justification", color: colors.accentGold },
+        { key: "references", label: "LEGAL REFERENCES", field: "reference", color: colors.lightGray },
+        { key: "comments", label: "OFFICER COMMENTS", field: "comment", color: colors.lightGray },
       ];
 
       entryTypes.forEach((et) => {
@@ -160,25 +175,48 @@ export const downloadAdminReport = asyncHandler(
         }
 
         if (entries.length > 0) {
-          doc.font("Helvetica-Bold").fontSize(8).fillColor(et.color || colors.accentGold).text(et.label);
+          // Sub-heading for Entry Type
+          doc.font("Helvetica-Bold").fontSize(8).fillColor(et.color).text(et.label);
+          doc.moveDown(0.3);
 
           entries.forEach((entry: any) => {
-            const displayVal = et.key === 'actions' ? entry[et.field].toUpperCase() : entry[et.field];
-            doc.font("Helvetica").fontSize(10).fillColor("#000000").text(displayVal, { indent: 10 });
-            doc.fontSize(7).fillColor(colors.lightGray).text(`By: ${entry.userId?.firstName} ${entry.userId?.lastName} (PJ: ${entry.userId?.pj || 'N/A'})`, { indent: 10 });
-            doc.moveDown(0.5);
+            if (doc.y > 720) {
+                doc.addPage();
+                drawHeader();
+                doc.moveDown(5);
+            }
+
+            const content = et.key === 'actions' ? entry[et.field].toUpperCase() : entry[et.field];
+            
+            // Text box for clarity
+            doc.font("Helvetica").fontSize(10).fillColor("#000000").text(content, { 
+                indent: 10,
+                lineGap: 1
+            });
+
+            // Metadata
+            const author = `${entry.userId?.firstName || 'Unknown'} ${entry.userId?.lastName || 'User'}`;
+            const pj = entry.userId?.pj ? ` (PJ: ${entry.userId.pj})` : "";
+            doc.fontSize(7.5).fillColor(colors.lightGray).text(`Submitted by: ${author}${pj}`, { indent: 10 });
+            doc.moveDown(0.8);
           });
           doc.moveDown(0.5);
         }
       });
-      doc.moveDown(1);
+
+      doc.moveDown(2); // Space between different manual sections
     });
 
-    // Footer logic...
+    // --- Footer: Page Numbers ---
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
-      doc.fontSize(8).fillColor(colors.lightGray).text(`Page ${i + 1} of ${range.count}`, 50, doc.page.height - 50, { align: "center" });
+      doc.fontSize(8).fillColor(colors.lightGray).text(
+        `Confidential - Internal Judiciary Document | Page ${i + 1} of ${range.count}`, 
+        50, 
+        doc.page.height - 40, 
+        { align: "center" }
+      );
     }
 
     doc.end();
