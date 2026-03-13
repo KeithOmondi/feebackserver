@@ -106,19 +106,20 @@ export const downloadAdminReport = asyncHandler(
     });
 
     res.setHeader("Content-Type", "application/pdf");
+    // Removed the date from the downloaded filename for consistency
     res.setHeader(
       "Content-Disposition", 
-      `attachment; filename=Audit_Report_${new Date().toISOString().split("T")[0]}.pdf`
+      `attachment; filename=Audit_Report.pdf`
     );
     doc.pipe(res);
 
     const colors = {
-      primaryGreen: "#1a3a32",  // Judicial Green
-      accentGold: "#b48222",    // Official Gold
+      primaryGreen: "#1a3a32",
+      accentGold: "#b48222",
       textDark: "#222222",
       lightGray: "#777777",
       borderGray: "#d1d1d1",
-      actionBlue: "#1e40af",    // Professional Blue
+      actionBlue: "#1e40af",
       bgSoft: "#f9f9f9"
     };
 
@@ -127,7 +128,8 @@ export const downloadAdminReport = asyncHandler(
       doc.rect(0, 0, doc.page.width, 100).fill(colors.primaryGreen);
       doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(20).text("HIGH COURT OF KENYA", 50, 30);
       doc.fontSize(10).font("Helvetica").text("DRAFT JUDICIAL SERVICE DISCIPLINARY PROCEDURES MANUAL", 50, 55);
-      doc.fontSize(9).fillColor(colors.accentGold).text(`REPORT GENERATED: ${new Date().toLocaleDateString('en-GB')}`, 50, 70);
+      
+      // LINE REMOVED: The "REPORT GENERATED" text was here.
     };
 
     drawHeader();
@@ -175,7 +177,6 @@ export const downloadAdminReport = asyncHandler(
         }
 
         if (entries.length > 0) {
-          // Sub-heading for Entry Type
           doc.font("Helvetica-Bold").fontSize(8).fillColor(et.color).text(et.label);
           doc.moveDown(0.3);
 
@@ -188,13 +189,11 @@ export const downloadAdminReport = asyncHandler(
 
             const content = et.key === 'actions' ? entry[et.field].toUpperCase() : entry[et.field];
             
-            // Text box for clarity
             doc.font("Helvetica").fontSize(10).fillColor("#000000").text(content, { 
                 indent: 10,
                 lineGap: 1
             });
 
-            // Metadata
             const author = `${entry.userId?.firstName || 'Unknown'} ${entry.userId?.lastName || 'User'}`;
             const pj = entry.userId?.pj ? ` (PJ: ${entry.userId.pj})` : "";
             doc.fontSize(7.5).fillColor(colors.lightGray).text(`Submitted by: ${author}${pj}`, { indent: 10 });
@@ -204,10 +203,10 @@ export const downloadAdminReport = asyncHandler(
         }
       });
 
-      doc.moveDown(2); // Space between different manual sections
+      doc.moveDown(2); 
     });
 
-    // --- Footer: Page Numbers ---
+    // --- Footer ---
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
@@ -222,7 +221,6 @@ export const downloadAdminReport = asyncHandler(
     doc.end();
   },
 );
-
 
 /**
  * Delete a specific entry from a manual section
