@@ -126,7 +126,7 @@ export const downloadAdminReport = asyncHandler(
     const drawHeader = () => {
       doc.rect(0, 0, doc.page.width, 100).fill(colors.primaryGreen);
       doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(20).text("HIGH COURT OF KENYA", 50, 30);
-      doc.fontSize(10).font("Helvetica").text("HIGH COURT DRAFT JUDICIAL SERVICE", 50, 55);
+      doc.fontSize(10).font("Helvetica").text("DRAFT JUDICIAL SERVICE DISCIPLINARY PROCEDURES MANUAL", 50, 55);
       doc.fontSize(9).fillColor(colors.accentGold).text(`REPORT GENERATED: ${new Date().toLocaleDateString('en-GB')}`, 50, 70);
     };
 
